@@ -5,25 +5,24 @@ import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
 import com.google.cloud.vision.v1.*;
 import com.google.protobuf.ByteString;
-import net.spy.memcached.MemcachedClient;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
+import redis.clients.jedis.Jedis;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.util.Arrays;
 import java.util.List;
 
 @Controller
 public class FileUploadController {
-    MemcachedClient memcachedClient;
+    Jedis jedis;
 
     public FileUploadController() throws IOException {
-        memcachedClient = new MemcachedClient(new InetSocketAddress("127.0.0.1", 11211));
+        jedis = new Jedis("localhost");
     }
 
     @PostMapping("/")
@@ -38,7 +37,7 @@ public class FileUploadController {
 
     private void cacheOCROutput(MultipartFile file, String textFromOCR) throws IOException {
 
-        memcachedClient.set(file.getName(), 60 * 60 * 24 * 30, textFromOCR);
+        jedis.set(file.getName(), textFromOCR);
     }
 
     private void uploadFileToGCS(MultipartFile file) throws IOException {
